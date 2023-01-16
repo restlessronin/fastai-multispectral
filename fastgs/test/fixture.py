@@ -27,7 +27,7 @@ def _get_mask_data():
     return MaskData.from_files("LC",get_channel_filenames,read_mask_file,["non-buildings","buildings"])
 
 def _get_augs():
-    return MSAugment()
+    return MSAugment.from_augs()
 
 # %% ../../nbs/001_test.fixture.ipynb 6
 def _get_11b_data_block():
