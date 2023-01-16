@@ -175,7 +175,7 @@ import albumentations as A
 Here we just use demo augmentations
 
 ``` python
-augs = MSAugment(train_aug=A.Rotate(p=1),valid_aug=A.HorizontalFlip(p=0.33))
+augs = MSAugment.from_augs(train_aug=A.Rotate(p=1),valid_aug=A.HorizontalFlip(p=0.33))
 ```
 
 Now we create the actual high level wrapper
