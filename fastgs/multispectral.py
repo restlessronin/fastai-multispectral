@@ -216,16 +216,25 @@ class MSAugment:
 
 # %% ../nbs/62_multispectral.ipynb 67
 @patch
-def __init__(self: MSAugment,train_aug=None,valid_aug=None): store_attr()
+def __init__(self: MSAugment,train_aug,valid_aug): store_attr()
 
-# %% ../nbs/62_multispectral.ipynb 69
+# %% ../nbs/62_multispectral.ipynb 68
+@patch(cls_method=True)
+def from_augs(
+    cls: MSAugment,
+    train_aug=None,
+    valid_aug=None
+):
+    return cls(train_aug=train_aug, valid_aug=valid_aug)
+
+# %% ../nbs/62_multispectral.ipynb 70
 @patch
 def create_xform_block(self: MSData) -> DataBlock:
     return TransformBlock(type_tfms=[
             partial(MSData.load_image,self),
         ])
 
-# %% ../nbs/62_multispectral.ipynb 70
+# %% ../nbs/62_multispectral.ipynb 71
 @patch
 def create_xform_block(self: MaskData) -> DataBlock:
     return TransformBlock(type_tfms=[
@@ -233,7 +242,7 @@ def create_xform_block(self: MaskData) -> DataBlock:
             AddMaskCodes(codes=self.mask_codes),
         ])
 
-# %% ../nbs/62_multispectral.ipynb 71
+# %% ../nbs/62_multispectral.ipynb 72
 @patch
 def create_item_xforms(self: MSAugment) -> list(ItemTransform):
     if self.train_aug is None and self.valid_aug is None: return []
@@ -241,7 +250,7 @@ def create_item_xforms(self: MSAugment) -> list(ItemTransform):
     elif self.train_aug is None: return [ValidMSSAT(self.valid_aug)]
     else: return [TrainMSSAT(self.train_aug),ValidMSSAT(self.valid_aug)]
 
-# %% ../nbs/62_multispectral.ipynb 73
+# %% ../nbs/62_multispectral.ipynb 74
 class GSUnetModel:
     pass
 
@@ -273,22 +282,22 @@ def load_learner(self:GSUnetModel,model_path:str,dl):
     learner.load(model_path)
     return learner
 
-# %% ../nbs/62_multispectral.ipynb 75
+# %% ../nbs/62_multispectral.ipynb 76
 class FastGS:
     pass
 
-# %% ../nbs/62_multispectral.ipynb 76
+# %% ../nbs/62_multispectral.ipynb 77
 @patch
 def __init__(self:FastGS, model:GSUnetModel, ms_data:MSData, mask_data:MaskData, ms_aug:MSAugment):
     store_attr()
 
-# %% ../nbs/62_multispectral.ipynb 77
+# %% ../nbs/62_multispectral.ipynb 78
 @patch(cls_method=True)
 def for_training(
     cls:FastGS,
     ms_data:MSData,
     mask_data:MaskData,
-    ms_aug:MSAugment=MSAugment()
+    ms_aug:MSAugment=MSAugment.from_augs()
 ):
     model = GSUnetModel.from_all(resnet18,ms_data,mask_data.mask_codes)
     return cls(model,ms_data,mask_data,ms_aug)
@@ -302,7 +311,7 @@ def for_inference(
     model = GSUnetModel.from_all(resnet18,ms_data,mask_codes)
     return cls(model,ms_data,None,None)
 
-# %% ../nbs/62_multispectral.ipynb 79
+# %% ../nbs/62_multispectral.ipynb 80
 @patch
 def create_data_block(self: FastGS, splitter=RandomSplitter(valid_pct=0.2, seed=107)) -> DataBlock:
     return DataBlock(
@@ -311,7 +320,7 @@ def create_data_block(self: FastGS, splitter=RandomSplitter(valid_pct=0.2, seed=
         item_tfms=self.ms_aug.create_item_xforms()
     )
 
-# %% ../nbs/62_multispectral.ipynb 81
+# %% ../nbs/62_multispectral.ipynb 82
 @patch
 def create_learner(self:FastGS,dl,reweight="avg") -> Learner:
     return self.model.create_learner(dl,pretrained=reweight is None,reweight=reweight)
